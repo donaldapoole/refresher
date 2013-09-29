@@ -1,0 +1,34 @@
+{
+  "name": "Refresher",
+  "version": "0.0.1",
+  "manifest_version": 2,
+  "description" : "Refresher - A Google Chrome extension by Tony Coculuzzi",
+  "author": "Tony Coculuzzi",
+  
+  "icons": { "16": "images/icons/16x16.png", "48": "images/icons/48x48.png", "128": "images/icons/128x128.png" },
+  
+  "permissions": ["notifications"],
+  
+  "omnibox": { "keyword" : "Refresher" },
+
+  "browser_action": {
+    "default_icon": {
+      "19": "images/icons/19x19.png",
+      "38": "images/icons/38x38.png"
+    },
+    "default_title": "Refresher",
+    "default_popup": "web/browseraction.html"
+  },
+
+  "background": {
+    "page": "web/background.html",
+    "persistent": false
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["web/content.js"]
+    }
+  ]
+}
