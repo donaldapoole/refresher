@@ -36,6 +36,7 @@ function startRefresher(s){
 
 function stopRefresher(){
 	console.log("Timer Stopped");
+	clearBadge();
 	timer = clearInterval(timer);
 }
 
@@ -57,6 +58,10 @@ function updateBadge(){
 	chrome.browserAction.setBadgeText({text: newString});	
 }
 
+function clearBadge(){
+	chrome.browserAction.setBadgeText({text: ""});
+}
+
 function check(){
 	stopRefresher();
 	showNotification();
@@ -68,7 +73,7 @@ function showNotification(){
 		type: "basic",
 		title: "Found text!",
 		message: "Text [text] was found!",
-		iconUrl: "../images/icons/48x48.png"
+		iconUrl: "../images/icons/notification_80x80.png"
 	}
 	var id = "refresher-notification-" + guid();
 	console.log(id);
