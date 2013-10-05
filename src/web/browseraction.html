@@ -3,14 +3,27 @@
 </head>
 <script type="text/javascript" src="browseraction.js"></script>
 <body>
-	<div id="left"></div>
+	<div id="left"><!--logo--></div>
 	<div id="right">
-		<button id="start_button">Start</button>
-		<input type="text" class="inputInfo" id="seconds_info" value="Every 10 Seconds" />
-		<input type="text" class="input" id="seconds" value="10" />
+		<div id="title">Site Name</div>
 		
-		<input type="text" class="inputInfo" id="find_info" value="Text: " />
-		<input type="text" class="input" id="find" value="" />
+		<div class="field" id="rateField">
+			<span class = "fieldName">Refresh Rate:</span>
+			<input type="text" class="inputInfo" id="seconds_info" value="Every 10 Seconds" disabled/>
+			<input type="text" class="input" id="seconds" value="10" />
+		</div>
+		
+		
+		<div class="field" id="searchField">
+			<span class="fieldName">Search Text:</span>
+			<input type="text" class="inputInfo" id="find_info" value="No Search Text" disabled/>
+			<input type="text" class="input" id="find" value="" />
+		</div>
+		
+		
+		<button id="start_button">Start</button>
+		<!--<button id="advanced_button"></button>-->
+		
 		<!--
 		<div id = "top">
 		

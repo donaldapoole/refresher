@@ -8,14 +8,22 @@ var MESSAGE_START = "refresher-start";
 var MESSAGE_STOP = "refresher-stop";
 
 var START_BUTTON_ID = "start_button";
+var ADVANCED_BUTTON_ID = "advanced_button";
 
 var STATE_START = 0;
 var STATE_STOP = 1;
 
 var state = 0;
 
+var advanced = false;
+
+var bodyHeight = 0;
+
 
 window.onload = function() {
+	
+	bodyHeight = document.getElementsByTagName('body')[0].style.height;
+	
 	document.getElementById(START_BUTTON_ID).onclick = function() {
 		switch(state){
 			case STATE_START:
@@ -38,6 +46,19 @@ window.onload = function() {
 			break;
 		}
 	}
+	
+	/*
+	document.getElementById(ADVANCED_BUTTON_ID).onclick = function() {
+		var body = document.getElementsByTagName('body')[0];
+		if (advanced) {
+			body.style.height = bodyHeight;
+			advanced = false;
+		}else{
+			body.style.height = 300;
+			advanced = true;
+		}
+	}
+	*/
 }
 
 

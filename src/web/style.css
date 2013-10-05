@@ -1,15 +1,23 @@
+html{
+	background-color: #333;
+}
+
 body{
 	width: 314px;
-	height: 94px;
+	height: 200px;
 	padding: 0px;
 	margin: 0px;
-	font-family: "Lucida Grande, helvetica, arial, sans-serif";
+	font-family: "Lucida Grande", helvetica, arial, sans-serif !important;
+	background-color: #FFF;
+	overflow: hidden;
 }
 
 button{
+	position: absolute;
 	outline: none;
 	margin: 0;
 	padding: 5px;
+	height: 25px;
 	border: 1px solid #E8E8E8;
 	background-color: #FAFAFA;
 	box-shadow:inset 0px 0px 1px 1px #FFF;
@@ -32,23 +40,13 @@ button:active{
 	outline: none;
 	width: 209px;
 	height: 23px;
-	font-family: 'Lucida Grande';
-}
-
-#seconds, #seconds_info{
-	top: 37px;
-	left: 100px;
-}
-
-#find, #find_info{
-	top: 66px;
-	left: 100px;
+	margin-top: 18px;
 }
 
 .input{
 	z-index: 1;
 	opacity: 0;
-	border: solid 1px #D8D8D8;
+	border: solid 1px #ccc;
 }
 
 .input:focus{
@@ -56,15 +54,33 @@ button:active{
 }
 
 .inputInfo{
-	border: solid 1px #E8E8E8;
+	border: solid 1px #eee;
 	z-index: 0;
 	color: #888888;
 }
 
+.field{
+	margin-left: 6px;
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: solid 1px #eee;
+	width: 210px;
+	height: 45px;
+}
+
+.field .fieldName{
+	position: absolute;
+	margin-left: 2px;
+	font-size: 11px;
+	display: block;
+	color: #999;
+}
+
 #left{
 	float: left;
-	width: 94px;
-	height: 94px;
+	width: 93px;
+	height: 100%;
+	border-right: 1px solid #e8e8e8;
 	background-color: #FAFAFA;
 	background-image: url(../images/icons/48x48.png);
 	background-position: center center;
@@ -90,8 +106,19 @@ button:active{
 	padding-left: 6px;
 }
 
+#title{
+	margin-top: 10px;
+	margin-left: 5px;
+	color: #666;
+	font-size: 16px;
+	overflow: hidden;
+	white-space: nowrap;
+	width: 200px;
+	
+}
+
 #start_button{
-	margin-top: 6px;
-	margin-left: 6px;
+	top: 170px;
+	left: 100px;
 	width: 209px;
 }
