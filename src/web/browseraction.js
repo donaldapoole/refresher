@@ -6,61 +6,62 @@
 
 var MESSAGE_START = "refresher-start";
 var MESSAGE_STOP = "refresher-stop";
+var MESSAGE_RESTART = "refresher-restart";
+var MESSAGE_FOUND = "refresher-found";
 
 var START_BUTTON_ID = "start_button";
-var ADVANCED_BUTTON_ID = "advanced_button";
+var INPUT_SECONDS_ID = "seconds";
+var INPUT_FIND_ID = "find";
 
 var STATE_START = 0;
 var STATE_STOP = 1;
 
 var state = 0;
 
-var advanced = false;
-
-var bodyHeight = 0;
-
+var tab;
 
 window.onload = function() {
 	
-	bodyHeight = document.getElementsByTagName('body')[0].style.height;
+	// Set title
+	chrome.tabs.getSelected(function(t){
+		tab = t;
+		document.getElementById('title').innerHTML = tab.title;
+	});
+	
 	
 	document.getElementById(START_BUTTON_ID).onclick = function() {
+		var t = tab;
 		switch(state){
 			case STATE_START:
 				setStateStop();
 				var s = parseInt(document.getElementById("seconds").value);
 				if (isNaN(s))s = 5;
-				console.log("sendMessage: " + MESSAGE_START + s + " seconds");
+				//var f = document.getElementById("find").value;
+				var f = "find this";
 				chrome.runtime.sendMessage({
 					type: MESSAGE_START,
-					seconds: s
+					tab: t,
+					seconds: s,
+					find: f
 				});
 				break;
 			
 			case STATE_STOP:
 				setStateStart();
-				console.log("sendMessage: " + MESSAGE_STOP);
 				chrome.extension.sendMessage({
-					type: MESSAGE_STOP
+					type: MESSAGE_STOP,
+					tab: t
 				});
 			break;
 		}
 	}
 	
-	/*
-	document.getElementById(ADVANCED_BUTTON_ID).onclick = function() {
-		var body = document.getElementsByTagName('body')[0];
-		if (advanced) {
-			body.style.height = bodyHeight;
-			advanced = false;
-		}else{
-			body.style.height = 300;
-			advanced = true;
-		}
-	}
-	*/
+	document.getElementById(INPUT_SECONDS_ID).onblur = validateSeconds;
+	document.getElementById(INPUT_FIND_ID).onblur = validateFind;
+	
+	validateSeconds();
+	validateFind();
 }
-
 
 function setStateStart(){
 	document.getElementById(START_BUTTON_ID).innerHTML = "Start";
@@ -70,4 +71,25 @@ function setStateStart(){
 function setStateStop(){
 	document.getElementById(START_BUTTON_ID).innerHTML = "Stop";
 	state = STATE_STOP;
+}
+
+function validateSeconds() {
+	var s = parseInt(document.getElementById("seconds").value);
+	if (isNaN(s)) {
+		s = 5;
+		document.getElementById("seconds").value = s;
+	}
+	
+	document.getElementById("seconds_info").value = "Every " + s + " seconds";
+}
+
+function validateFind() {
+	var f = document.getElementById("find").value;
+	var out = "nothing";
+	
+	if (f != "") {
+		out = f;
+	}
+	
+	document.getElementById("find_info").value = out;
 }
