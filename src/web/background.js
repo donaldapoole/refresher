@@ -4,9 +4,11 @@
  * Time: 1:39 PM
  */
 
+/* Tab States */
 var TAB_STATE_ACTIVE = 0;
 var TAB_STATE_INACTIVE = 1;
 
+/* Messages */
 var MESSAGE_LOAD = "refresher-load";
 var MESSAGE_START = "refresher-start";
 var MESSAGE_STOP = "refresher-stop";
@@ -18,23 +20,34 @@ var tabs;
 var currentTab = 0;
 
 window.onload = function() {
+	// Init tabs array
 	tabs = new Array();
+	
+	// Start master clock
 	timer = setInterval(tick, 1000);
 }
 
+// Add event listener for when the current tab changes
 chrome.tabs.onHighlighted.addListener(function(tabInfo){
+	// Store the new current tab's id for later reference
 	currentTab = tabInfo.tabIds[0];
-	updateCurrentTab();
+	
+	// Update Refresher's badge for the new current tab
+	updateCurrentBadge();
 });
 
+// Add event listener for when a tab is closed
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-	var tab = tabs[tabId];
+	// If the closed tab was registered with Refresher, stop its refresher
+	var tab = tabs[tabId]; 
 	if (tab != null) {
+		// Create dummy object because reference to actual tab object is no longer valid
 		var tempTab = {id: tabId};
 		stopRefresher(tempTab);
 	}
 });
 
+// Add event listener for Chrome messages
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     switch(message.type) {
 	case MESSAGE_LOAD:
@@ -50,11 +63,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     return true;
 });
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-	if (request.greeting == "hello")
-		sendResponse({farewell: "goodbye"});
-});
-
+// Called from a message, responds with the supplied tab's properties, and returns them to the BrowserAction
 function getTabInfo(t, sendResponse){
 	var tab = tabs[t.id];
 	if (tab != null) {
@@ -66,6 +75,7 @@ function getTabInfo(t, sendResponse){
 	}
 }
 
+// Add tab info to refresher loop, creating a new one if one for that tab doesn't already exist
 function startRefresher(tab, s, f){
 	console.log("Timer Started:\n" + s + " seconds \nFind: " + f + " \nTab " + tab.title);
 	tabs[tab.id] = {};
@@ -76,41 +86,52 @@ function startRefresher(tab, s, f){
 	tabs[tab.id].ticks = 0;
 	tabs[tab.id].badge = "";
 	updateBadge(tab.id);
-	updateCurrentTab();
+	updateCurrentBadge();
 }
 
+// Stop the tab's refresher by setting it's state to INACTIVE, also clear its badge
 function stopRefresher(tab){
 	//console.log("Timer Stopped \nTab: " + tab.title);
 	tabs[tab.id].state = TAB_STATE_INACTIVE;
 	tabs[tab.id].badge = "";
 }
 
+// Timer tick. Cycle through all tab refreshers and deal with them accordingly
 function tick(){
 	for (var i = 0; i<tabs.length; i+=1) {
 		var tab = tabs[i];
+		
+		// Skip this iteration if it doesn't contain a tab object
 		if (tab == null) continue;
+		
+		// Skip this tab if its state is INACTIVE
 		if (tab.state == TAB_STATE_INACTIVE) continue;
 		
+		// If tab has reached its goal, refresh it, update badge, and skip
 		if(tab.ticks == tab.seconds){
 			updateBadge(i);
-			checkForText(i);
+			refreshTab(i);
 			continue;
 		}
 		updateBadge(i);
+		
+		// Add tick to tab object
 		tab.ticks += 1;
 		console.log("Tick: " + tab.tab.title);
 	}
-	updateCurrentTab();
+	updateCurrentBadge();
 }
 
-function checkForText(t){
+// Refreshes page, reset tab timer
+function refreshTab(t){
 	var tab = tabs[t];
 	var details = {code:"location.reload();"};
 	chrome.tabs.executeScript(t, details);
 	tab.ticks = 0;
 }
 
-function updateCurrentTab() {
+// Update the current tab's badge
+function updateCurrentBadge() {
 	if (tabs[currentTab] != null) {
 		chrome.browserAction.setBadgeText({text: tabs[currentTab].badge});
 		updateBadge(currentTab);
@@ -119,6 +140,7 @@ function updateCurrentTab() {
 	}
 }
 
+// Update the tab's badge property, to be pulled from the updateCurrentBadge method
 function updateBadge(tabIndex){
 	
 	if (tabs[tabIndex].state == TAB_STATE_INACTIVE){
@@ -136,6 +158,7 @@ function updateBadge(tabIndex){
 	tabs[tabIndex].badge = newString;
 }
 
+// Show a notification if supplied string is found
 function showNotification(){
 	document.getElementById('refresher-audio').play();
 	var options = {
