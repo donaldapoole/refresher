@@ -3,34 +3,27 @@
 </head>
 <script type="text/javascript" src="browseraction.js"></script>
 <body>
-	<div id="left"><!--logo--></div>
+	<div id="left">
+		<!--logo-->
+		<!--<div id="debug"></div>-->
+	</div>
 	<div id="right">
+		<input type="text" class="hidden" value="" tabindex=0/>
+		
 		<div id="title">Site Name</div>
 		
 		<div class="field" id="rateField">
 			<span class = "fieldName">Refresh Rate:</span>
-			<input type="text" class="inputInfo" id="seconds_info" value="" disabled/>
-			<input type="text" class="input" id="seconds" value="2" />
+			<input type="text" class="inputInfo" id="seconds_info" value="uninitialized" disabled/>
+			<input type="text" class="input" id="seconds" value="10" />
 		</div>
-		
 		
 		<div class="field" id="searchField">
 			<span class="fieldName">Search Text:</span>
-			<input type="text" class="inputInfo" id="find_info" value="" disabled/>
+			<input type="text" class="inputInfo" id="find_info" value="uninitialized" disabled/>
 			<input type="text" class="input" id="find" value="" />
 		</div>
 		
-		
 		<button id="start_button">Start</button>
-		<!--<button id="advanced_button"></button>-->
-		
-		<!--
-		<div id = "top">
-		
-		</div>
-		<div id="bottom">
-	    	
-		</div>
-		-->
     </div>
 </body>

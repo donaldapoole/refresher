@@ -4,6 +4,10 @@
  * Time: 1:39 PM
  */
 
+var TAB_STATE_ACTIVE = 0;
+var TAB_STATE_INACTIVE = 1;
+
+var MESSAGE_LOAD = "refresher-load";
 var MESSAGE_START = "refresher-start";
 var MESSAGE_STOP = "refresher-stop";
 var MESSAGE_RESTART = "refresher-restart";
@@ -12,6 +16,7 @@ var MESSAGE_FOUND = "refresher-found";
 var START_BUTTON_ID = "start_button";
 var INPUT_SECONDS_ID = "seconds";
 var INPUT_FIND_ID = "find";
+
 
 var STATE_START = 0;
 var STATE_STOP = 1;
@@ -22,10 +27,26 @@ var tab;
 
 window.onload = function() {
 	
+	trace("browseraction.js Loaded");
+	
 	// Set title
 	chrome.tabs.getSelected(function(t){
 		tab = t;
 		document.getElementById('title').innerHTML = tab.title;
+		chrome.runtime.sendMessage(
+			{type: MESSAGE_LOAD,tab: t},
+			function(response){
+				setSeconds(response.seconds);
+				setFind(response.find);
+				if (response.state == STATE_START) {
+					setStateStop();
+				}else if (response.state == STATE_STOP) {
+					setStateStart();
+				}
+				validateSeconds();
+				validateFind();
+			}
+		);
 	});
 	
 	
@@ -34,10 +55,8 @@ window.onload = function() {
 		switch(state){
 			case STATE_START:
 				setStateStop();
-				var s = parseInt(document.getElementById("seconds").value);
-				if (isNaN(s))s = 5;
-				//var f = document.getElementById("find").value;
-				var f = "find this";
+				var s = getSeconds();
+				var f = getFind();
 				chrome.runtime.sendMessage({
 					type: MESSAGE_START,
 					tab: t,
@@ -56,8 +75,8 @@ window.onload = function() {
 		}
 	}
 	
-	document.getElementById(INPUT_SECONDS_ID).onblur = validateSeconds;
-	document.getElementById(INPUT_FIND_ID).onblur = validateFind;
+	document.getElementById(INPUT_SECONDS_ID).onblur = function(){validateSeconds();};
+	document.getElementById(INPUT_FIND_ID).onblur = function(){validateFind();};
 	
 	validateSeconds();
 	validateFind();
@@ -73,23 +92,64 @@ function setStateStop(){
 	state = STATE_STOP;
 }
 
+/* Seconds */
 function validateSeconds() {
 	var s = parseInt(document.getElementById("seconds").value);
 	if (isNaN(s)) {
-		s = 5;
-		document.getElementById("seconds").value = s;
+		s = 10;
+		setSeconds(s);
 	}
-	
 	document.getElementById("seconds_info").value = "Every " + s + " seconds";
 }
 
+function getSeconds() {
+	validateSeconds();
+	return parseInt(document.getElementById("seconds").value);
+}
+
+function setSeconds(s) {
+	trace("Set seconds to " + s);
+	if (isNaN(s)) {
+		console.log("That is not a number");
+		s = 5;
+	}
+	document.getElementById("seconds").value = s;
+}
+
+/* Find */
 function validateFind() {
 	var f = document.getElementById("find").value;
-	var out = "nothing";
+	var out = "-";
 	
 	if (f != "") {
 		out = f;
 	}
 	
 	document.getElementById("find_info").value = out;
+}
+
+function getFind() {
+	validateFind();
+	return document.getElementById("find").value;
+}
+
+function setFind(f) {
+	document.getElementById("find").value = f;
+}
+
+/* Data */
+/*
+function saveData(){
+	//var dataObject = {seconds: parseInt(document.getElementById("seconds").value), find: document.getElementById("find").value};
+	var dataObject = {seconds: getSeconds()};
+	chrome.storage.sync.set({ DATA_TAB: dataObject});
+	chrome.storage.sync.set({"refresher__last" : getSeconds()});
+}
+*/
+
+/* Debug */
+function trace(s) {
+	var debug = document.getElementById("debug");
+	if (debug == null) return;
+	debug.innerHTML += s + "<br /> ------------------------------ <br />";
 }

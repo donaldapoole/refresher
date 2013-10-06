@@ -7,6 +7,7 @@
 var TAB_STATE_ACTIVE = 0;
 var TAB_STATE_INACTIVE = 1;
 
+var MESSAGE_LOAD = "refresher-load";
 var MESSAGE_START = "refresher-start";
 var MESSAGE_STOP = "refresher-stop";
 var MESSAGE_RESTART = "refresher-restart";
@@ -14,24 +15,56 @@ var MESSAGE_FOUND = "refresher-found";
 
 var timer;
 var tabs;
+var currentTab = 0;
 
 window.onload = function() {
 	tabs = new Array();
 	timer = setInterval(tick, 1000);
 }
 
+chrome.tabs.onHighlighted.addListener(function(tabInfo){
+	currentTab = tabInfo.tabIds[0];
+	updateCurrentTab();
+});
+
+chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+	var tab = tabs[tabId];
+	if (tab != null) {
+		var tempTab = {id: tabId};
+		stopRefresher(tempTab);
+	}
+});
+
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-	//console.log("background.js :: received message: " + message.type);
     switch(message.type) {
-        case "refresher-start":
+	case MESSAGE_LOAD:
+            getTabInfo(message.tab, sendResponse);
+            break;
+        case MESSAGE_START:
             startRefresher(message.tab, message.seconds, message.find);
             break;
-        case "refresher-stop":
+        case MESSAGE_STOP:
             stopRefresher(message.tab);
             break;
     }
     return true;
 });
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+	if (request.greeting == "hello")
+		sendResponse({farewell: "goodbye"});
+});
+
+function getTabInfo(t, sendResponse){
+	var tab = tabs[t.id];
+	if (tab != null) {
+		sendResponse({
+			seconds: tab.seconds,
+			find: tab.find,
+			state: tab.state
+		});
+	}
+}
 
 function startRefresher(tab, s, f){
 	console.log("Timer Started:\n" + s + " seconds \nFind: " + f + " \nTab " + tab.title);
@@ -42,18 +75,17 @@ function startRefresher(tab, s, f){
 	tabs[tab.id].find = f;
 	tabs[tab.id].ticks = 0;
 	tabs[tab.id].badge = "";
+	updateBadge(tab.id);
+	updateCurrentTab();
 }
 
 function stopRefresher(tab){
-	console.log("Timer Stopped \nTab: " + tab.title);
+	//console.log("Timer Stopped \nTab: " + tab.title);
 	tabs[tab.id].state = TAB_STATE_INACTIVE;
 	tabs[tab.id].badge = "";
-	//clearBadge();
-	//timer = clearInterval(timer);
 }
 
 function tick(){
-	
 	for (var i = 0; i<tabs.length; i+=1) {
 		var tab = tabs[i];
 		if (tab == null) continue;
@@ -61,25 +93,30 @@ function tick(){
 		
 		if(tab.ticks == tab.seconds){
 			updateBadge(i);
-			//checkForText();
+			checkForText(i);
 			continue;
 		}
 		updateBadge(i);
 		tab.ticks += 1;
 		console.log("Tick: " + tab.tab.title);
 	}
-	
-	/*
-	if(ticks == seconds){
-		updateBadge();
-		checkForText();
-		return;
+	updateCurrentTab();
+}
+
+function checkForText(t){
+	var tab = tabs[t];
+	var details = {code:"location.reload();"};
+	chrome.tabs.executeScript(t, details);
+	tab.ticks = 0;
+}
+
+function updateCurrentTab() {
+	if (tabs[currentTab] != null) {
+		chrome.browserAction.setBadgeText({text: tabs[currentTab].badge});
+		updateBadge(currentTab);
+	}else{
+		chrome.browserAction.setBadgeText({text: ""});
 	}
-	console.log("Ticks: " + ticks.toString());
-	updateBadge();
-	
-	ticks += 1;
-	*/
 }
 
 function updateBadge(tabIndex){
@@ -89,10 +126,14 @@ function updateBadge(tabIndex){
 		return;
 	}
 	
+	if ((tabs[tabIndex].seconds - tabs[tabIndex].ticks) < 1) {
+		tabs[tabIndex].badge = "";
+		return;
+	}
+	
 	var zero = ((tabs[tabIndex].seconds-tabs[tabIndex].ticks) < 10) ? "0" : "" ;
 	var newString = "0:" + zero + (tabs[tabIndex].seconds - tabs[tabIndex].ticks);
 	tabs[tabIndex].badge = newString;
-	//chrome.browserAction.setBadgeText({text: newString});	
 }
 
 function showNotification(){
