@@ -12,16 +12,21 @@ var TAB_STATE_INACTIVE = 1;
 var MESSAGE_LOAD = "refresher-load";
 var MESSAGE_START = "refresher-start";
 var MESSAGE_STOP = "refresher-stop";
+var MESSAGE_CHECK = "refresher-check";
 var MESSAGE_RESTART = "refresher-restart";
 var MESSAGE_FOUND = "refresher-found";
 
 var timer;
 var tabs;
+var notificationTabs;
 var currentTab = 0;
 
 window.onload = function() {
 	// Init tabs array
-	tabs = new Array();
+	tabs = [];
+	
+	// Init notificationTabs array
+	notificationTabs = [];
 	
 	// Start master clock
 	timer = setInterval(tick, 1000);
@@ -34,6 +39,33 @@ chrome.tabs.onHighlighted.addListener(function(tabInfo){
 	
 	// Update Refresher's badge for the new current tab
 	updateCurrentBadge();
+});
+
+// Add event listener for when tabs load or change urls
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, updatedTab) {
+	var tabRefresher = tabs[tabId];
+	if (tabRefresher == null) return;
+	
+	switch(changeInfo.status){
+		case "complete":
+			console.log("Tab loaded: " + tabRefresher.tab.title);
+			chrome.tabs.sendMessage(
+				tabId,
+				{type: MESSAGE_CHECK, tab: updatedTab, find: tabs[tabId].find},
+				function(response){
+					console.log("Response! from tab " + response.tab.id + ": " + response.tab.title);
+					postRefresh(response);
+				}
+			);
+			break;
+		
+		case "loading":
+			console.log("Tab loading: " + tabRefresher.tab.title);
+			if (tabRefresher.tab.url != updatedTab.url) {
+				stopRefresher(updatedTab);
+			}
+			break;
+	}
 });
 
 // Add event listener for when a tab is closed
@@ -84,6 +116,7 @@ function startRefresher(tab, s, f){
 	tabs[tab.id].seconds = s;
 	tabs[tab.id].find = f;
 	tabs[tab.id].ticks = 0;
+	tabs[tab.id].url = tab.url;
 	tabs[tab.id].badge = "";
 	updateBadge(tab.id);
 	updateCurrentBadge();
@@ -117,7 +150,7 @@ function tick(){
 		
 		// Add tick to tab object
 		tab.ticks += 1;
-		console.log("Tick: " + tab.tab.title);
+		console.log("Tick: " + tab.tab.id + ": " + tab.tab.title);
 	}
 	updateCurrentBadge();
 }
@@ -128,6 +161,18 @@ function refreshTab(t){
 	var details = {code:"location.reload();"};
 	chrome.tabs.executeScript(t, details);
 	tab.ticks = 0;
+	tab.state = TAB_STATE_INACTIVE;
+}
+
+// deal with the newly loaded tab's response
+function postRefresh(response){
+	if (response.found != null && response.found.length > 0) {
+		showNotification(response.tab, response.found);
+		stopRefresher(response.tab);
+	}else{
+		tabs[response.tab.id].state = TAB_STATE_ACTIVE;
+		updateBadge(response.tab.id);
+	}
 }
 
 // Update the current tab's badge
@@ -159,17 +204,27 @@ function updateBadge(tabIndex){
 }
 
 // Show a notification if supplied string is found
-function showNotification(){
+function showNotification(tab, found){
 	document.getElementById('refresher-audio').play();
+	
+	var items = "";
+	for(var i = 0; i<found.length; i+=1){
+		items += " - "+found[i]+"\n";
+	}
+	
 	var options = {
 		type: "basic",
-		title: "Found text!",
-		message: "Text [text] was found!",
+		title: "Refresher",
+		message: "Tab contains the following text:\n\n" + items,
 		iconUrl: "../images/icons/notification_80x80.png"
 	}
 	var id = "refresher-notification-" + guid();
+	notificationTabs[id] = tab.id;
 	console.log(id);
-	chrome.notifications.create(id, options, function(id){});
+	chrome.notifications.create(id, options, function(notificationId){
+		console.log("Notification response! " + notificationId + ": tab " + notificationTabs[notificationId]);
+		chrome.tabs.update(notificationTabs[notificationId], {selected: true});
+	});
 }
 
 

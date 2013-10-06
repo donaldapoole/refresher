@@ -10,6 +10,7 @@ var TAB_STATE_INACTIVE = 1;
 var MESSAGE_LOAD = "refresher-load";
 var MESSAGE_START = "refresher-start";
 var MESSAGE_STOP = "refresher-stop";
+var MESSAGE_CHECK = "refresher-check";
 var MESSAGE_RESTART = "refresher-restart";
 var MESSAGE_FOUND = "refresher-found";
 
@@ -57,21 +58,15 @@ window.onload = function() {
 				setStateStop();
 				var s = getSeconds();
 				var f = getFind();
-				chrome.runtime.sendMessage({
-					type: MESSAGE_START,
-					tab: t,
-					seconds: s,
-					find: f
-				});
+				var message = {type: MESSAGE_START, tab: t, seconds: s, find: f};
+				chrome.runtime.sendMessage(message);
 				break;
 			
 			case STATE_STOP:
 				setStateStart();
-				chrome.extension.sendMessage({
-					type: MESSAGE_STOP,
-					tab: t
-				});
-			break;
+				var message = {type: MESSAGE_STOP, tab: t};
+				chrome.extension.sendMessage(message);
+				break;
 		}
 	}
 	
